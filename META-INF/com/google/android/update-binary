@@ -1,0 +1,44 @@
+#!/sbin/sh
+#/system/bin/sh
+#上面两个可能导致刷入zip错误255
+#=================================================
+#  redmi9a_android10_twrp_mount_system_rw 
+#=================================================
+
+#OUTFD 和安装zip显示输出日志有关系
+#有些twrp不支持中文，如果用中文输出信息会乱码
+OUTFD=/proc/self/fd/$2
+
+#输出日志
+ui_print() {
+  until [ ! "$1" ]; do
+    echo "ui_print $1
+      ui_print" >> "$OUTFD"
+    shift
+  done
+}
+
+ui_print " "
+ui_print "==============================================="
+ui_print "|    redmi9a_android10_twrp_mount_system_rw    |"
+ui_print "==============================================="
+ui_print " "
+
+#判断是否有root
+if [ `whoami` != "root" ]; then ui_print "No root detected. Please try again as root. Abort"; exit 1; else ui_print "find root"; fi
+#判断是否在twrp
+if ( which twrp>/dev/null ); then ui_print "Device is in custom recovery mode"; else ui_print "Device is in Android mode. Ignoring"; exit 1; fi
+#判断cpu的架构，备注安卓系统内显示的架构不一定和twrp内显示的一致，例如红米9a是64位的cpu装了32位的系统,不过这个也不一定准
+abi="$(getprop ro.product.cpu.abi)"
+ui_print "-The CPU architecture: $abi"
+
+#使根目录读写
+#针对红米9a的system路径
+mount /dev/block/mapper/system
+mount /dev/block/mapper/product 
+mount /dev/block/mapper/vendor
+mount -o rw,remount /dev/block/mapper/system
+mount -o rw,remount /dev/block/mapper/product
+mount -o rw,remount /dev/block/mapper/vendor
+
+ui_print "done"
